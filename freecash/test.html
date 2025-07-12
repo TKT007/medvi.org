@@ -3,13 +3,41 @@
 <head>
   <meta name="referrer" content="no-referrer">
 <script>
-// Override document.referrer to always show Facebook
-Object.defineProperty(document, 'referrer', {
-    get: function() {
-        return 'https://www.facebook.com/';
-    },
-    configurable: false
-});
+(function() {
+    // Override the referrer property
+    Object.defineProperty(document, 'referrer', {
+        get: function() {
+            return 'https://www.facebook.com/';
+        },
+        configurable: false
+    });
+
+    // Override history methods that might reveal actual referrer
+    const originalPushState = history.pushState;
+    const originalReplaceState = history.replaceState;
+
+    history.pushState = function(state, title, url) {
+        // Set referrer in state if needed
+        if (state && typeof state === 'object') {
+            state.referrer = 'https://www.facebook.com/';
+        }
+        return originalPushState.call(this, state, title, url);
+    };
+
+    history.replaceState = function(state, title, url) {
+        if (state && typeof state === 'object') {
+            state.referrer = 'https://www.facebook.com/';
+        }
+        return originalReplaceState.call(this, state, title, url);
+    };
+
+    // Override window.location if needed
+    if (window.location.search.includes('source=')) {
+        const url = new URL(window.location);
+        url.searchParams.set('source', 'facebook');
+        window.history.replaceState({}, '', url.toString());
+    }
+})();
 </script>
 
   <meta charset="UTF-8">
